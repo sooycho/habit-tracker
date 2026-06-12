@@ -86,22 +86,7 @@
   .freq-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .freq-label{font-size:11px;color:var(--text3);}
   .freq-select{font-size:11px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:2px 6px;font-family:inherit;cursor:pointer;outline:none;}
-.drag-handle{
-  width:22px;
-  height:28px;
-  border:none;
-  background:none;
-  color:var(--text3);
-  font-size:16px;
-  cursor:grab;
-  flex-shrink:0;
-  margin-top:1px;
-}
-.habit-edit-row.dragging{
-  opacity:.45;
-}
 
-  
   /* 요일 선택 토글 */
   .days-picker{display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;}
   .day-toggle{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:all .15s;flex-shrink:0;}
@@ -232,20 +217,7 @@ function loadData(){
 function saveData(){
   localStorage.setItem('habit_tracker_v3',JSON.stringify({cats:CATS,archived:ARCHIVED}));
 }
-let draggedHabit = null;
-
-function moveHabit(catIdx, fromIdx, toIdx){
-  if(fromIdx === toIdx) return;
-
-  const habits = CATS[catIdx].habits;
-  const [moved] = habits.splice(fromIdx, 1);
-  habits.splice(toIdx, 0, moved);
-
-  saveData();
-  renderWeekly();
-}
-  
-  let {cats:CATS,archived:ARCHIVED}=loadData();
+let {cats:CATS,archived:ARCHIVED}=loadData();
 
 function exportData(){
   const blob=new Blob([JSON.stringify({version:3,cats:CATS,archived:ARCHIVED,exported:new Date().toISOString()},null,2)],{type:'application/json'});
@@ -457,43 +429,11 @@ function renderWeekly(){
 
     if(editMode){
       const list=document.createElement('div');list.className='habit-edit-list';
-     cat.habits.forEach((h,hIdx)=>{
-  const days=h.days||defaultDays();
+      cat.habits.forEach((h,hIdx)=>{
+        const days=h.days||defaultDays();
+        const row=document.createElement('div');row.className='habit-edit-row';
 
-  const row=document.createElement('div');
-  row.className='habit-edit-row';
-  row.draggable = true;
-
-  row.addEventListener('dragstart', e=>{
-    draggedHabit = {catIdx, hIdx};
-    row.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-  });
-
-  row.addEventListener('dragend', ()=>{
-    row.classList.remove('dragging');
-    draggedHabit = null;
-  });
-
-  row.addEventListener('dragover', e=>{
-    e.preventDefault();
-  });
-
-  row.addEventListener('drop', e=>{
-    e.preventDefault();
-    if(!draggedHabit) return;
-    if(draggedHabit.catIdx !== catIdx) return; // 같은 카테고리 안에서만 이동
-    moveHabit(catIdx, draggedHabit.hIdx, hIdx);
-  });
-
-  const dragBtn=document.createElement('button');
-  dragBtn.className='drag-handle';
-  dragBtn.textContent='☰';
-  dragBtn.type='button';
-
-  const mb=document.createElement('button');
-  mb.className='minus-btn';
-  mb.textContent='−';
+        const mb=document.createElement('button');mb.className='minus-btn';mb.textContent='−';
         mb.onclick=()=>{
           const hasRecord=Object.keys(h.done).some(k=>h.done[k]);
           if(hasRecord) ARCHIVED.push({...h,catName:cat.name,catColor:cat.color,deletedAt:new Date().toISOString()});
@@ -538,9 +478,7 @@ function renderWeekly(){
         });
 
         fields.appendChild(nameInp);fields.appendChild(freqRow);fields.appendChild(picker);
-        row.appendChild(dragBtn);
-row.appendChild(mb);
-row.appendChild(fields);
+        row.appendChild(mb);row.appendChild(fields);
         list.appendChild(row);
       });
       sec.appendChild(list);
